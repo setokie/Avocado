@@ -1,0 +1,172 @@
+---
+title: "Avocado Price"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(lubridate)
+library(plotly)
+library(tibbletime)
+library(DT)
+library(crosstalk)
+```
+
+<style>
+.colored {
+  background-color: #c6e2ff;
+}
+</style>
+
+```{r include=FALSE}
+# load data set
+plotdata <- read.csv('avocado.csv')
+
+# set Date as Date type variable
+plotdata$Date <- as_datetime(plotdata$Date)
+```
+
+Avocado Price
+======================================================================
+
+Avocado Price {data-width=650}
+-----------------------------------------------------------------------
+
+### Average Price
+
+```{r}
+# create tibble data for avocado type
+type_tibble <- plotdata %>%
+        select(Date, type, AveragePrice) %>%
+        arrange(Date) %>%
+        group_by(type) %>%
+        as_tbl_time(index = Date) %>%
+        as_period('month')
+
+# create line plot
+plot_ly(data = type_tibble, 
+        x = ~Date, y = ~AveragePrice, color = ~type, 
+        mode = "lines+markers") %>%
+        layout(title = "Average Avocado Price by Type",
+               xaxis = list(title = "Year"),
+               yaxis = list(title = "Average Price"))
+
+
+```
+
+
+Search {data-icon="fa-search"}
+======================================================================
+
+Column {data-width=250}
+-----------------------------------------------------------------------
+
+### Filters {.no-title .colored }
+**Select Region**  
+
+```{r}
+# create tibble for region
+region_tibble <- plotdata %>%
+        select(Date, type, AveragePrice, region) %>%
+        arrange(Date) %>%
+        group_by(type, region) %>%
+        as_tbl_time(index = Date) %>%
+        as_period('month')
+
+# Create plot data that will be used to link filters, data table, and plot.
+filter_data <- SharedData$new(region_tibble)
+
+# Create filter for region
+filter_select("region", "Region", filter_data, ~region, allLevels = TRUE, multiple = FALSE)
+        
+```
+
+ ***
+ 
+ **Data table**
+```{r}
+# Create data table
+datatable(filter_data, rownames = FALSE, 
+          colnames = c('Type','Average Price', 'Region'),
+          extensions = "Scroller",
+          options=list(deferRender = FALSE, 
+                       scrollY = 400, 
+                       scrollCollapse = TRUE,
+                       scroller = TRUE,
+                       dom = 't'))
+```
+ 
+ 
+Column {data-width=750}
+-----------------------------------------------------------------------
+### Price by Region {.no-title .colored }
+
+```{r}
+set.seed(123)
+
+# Create line plot
+plot_ly(filter_data, x = ~Date, y = ~AveragePrice,
+        color = ~type, type = 'scatter', mode = 'lines+markers') %>%
+        layout(title = "Average Avocado Price by Type",
+               xaxis = list(title = "Year"),
+               yaxis = list(title = "Average Price"))
+```
+
+
+About {data-icon="fa-info-circle"}
+=======================================================================
+
+Column {data-width=600}
+-----------------------------------------------------------------------
+
+### { .colored }
+
+**Data Source**  
+The data set for this project is from [kaggle](https://www.kaggle.com/neuromusic/avocado-prices).
+
+**Content (taken from the data set author kaggle page)**  
+This data was downloaded from the Hass Avocado Board website in May of 2018 & compiled into a single CSV. Here's how the Hass Avocado Board describes the data on their website:
+
+The table below represents weekly 2018 retail scan data for National retail volume (units) and price. Retail scan data comes directly from retailers' cash registers based on actual retail sales of Hass avocados. Starting in 2013, the table below reflects an expanded, multi-outlet retail data set. Multi-outlet reporting includes an aggregation of the following channels: grocery, mass, club, drug, dollar and military. The Average Price (of avocados) in the table reflects a per unit (per avocado) cost, even when multiple units (avocados) are sold in bags. The Product Lookup codes (PLU's) in the table are only for Hass avocados. Other varieties of avocados (e.g. greenskins) are not included in this table.
+
+Some relevant columns in the data set:
+
+* Date - The date of the observation
+* AveragePrice - the average price of a single avocado
+* type - conventional or organic
+* year - the year
+* Region - the city or region of the observation
+* Total Volume - Total number of avocados sold
+* 4046 - Total number of avocados with PLU 4046 sold
+* 4225 - Total number of avocados with PLU 4225 sold
+* 4770 - Total number of avocados with PLU 4770 sold
+
+**Acknowledgements**  
+
+Many thanks to the Hass Avocado Board for sharing this data!!
+
+http://www.hassavocadoboard.com/retail/volume-and-price-data
+
+
+Documentation {data-icon="fa-book"}
+=======================================================================
+
+Column {data-width=600}
+-----------------------------------------------------------------------
+
+### { .colored }
+
+**About this project**  
+
+This dashboard project utilize [flexdashboard](https://rmarkdown.rstudio.com/flexdashboard/index.html) to create interactive visualization on Avocado Data Set from [kaggle](https://www.kaggle.com/neuromusic/avocado-prices).
+
+**Features description**  
+1. Price, displays plot visualization on avocado average price from year 2015-2018 grouped by type(conventional and organic).
+2. Search, by default this will display avocado average price grouped by type(conventional and organic) then region. The region can be chosen via drop down menu. The plot then will adjust its visual according to region selected
+
+
+All plot displayed generated with plotly.

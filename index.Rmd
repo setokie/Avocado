@@ -1,0 +1,87 @@
+---
+title: "Developing Data Product"
+subtitle: "Week 4 Assignment"
+author: "Nur Seto Dimas"
+date: "19 January 2020"
+output: 
+  ioslides_presentation: 
+    highlight: haddock
+    keep_md: yes
+    smaller: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## About The Project
+
+This dashboard project utilize [flexdashboard](https://rmarkdown.rstudio.com/flexdashboard/index.html) to create interactive visualization on Avocado Data Set from [kaggle](https://www.kaggle.com/neuromusic/avocado-prices).
+
+**Features description**  
+1. Price, displays plot visualization on avocado average price from year 2015-2018 grouped by type(conventional and organic).  
+2. Search, by default this will display avocado average price grouped by type(conventional and organic) then region. The region can be chosen via drop down menu. The plot then will adjust its visual according to region selected
+
+
+All plot displayed generated with plotly.
+
+## Overview on Data set
+
+This data was downloaded from the Hass Avocado Board website in May of 2018 & compiled into a single CSV. Here's how the Hass Avocado Board describes the data on their website.
+
+Some relevant columns in the data set:
+
+* Date - The date of the observation
+* AveragePrice - the average price of a single avocado
+* type - conventional or organic
+* year - the year
+* Region - the city or region of the observation
+* Total Volume - Total number of avocados sold
+* 4046 - Total number of avocados with PLU 4046 sold
+* 4225 - Total number of avocados with PLU 4225 sold
+* 4770 - Total number of avocados with PLU 4770 sold
+
+## Plot
+
+```{r eval=FALSE, message=FALSE, warning=FALSE, echo=TRUE}
+plot_ly(data = type_tibble, 
+        x = ~Date, y = ~AveragePrice, color = ~type, 
+        mode = "lines+markers") %>%
+        layout(title = "Average Avocado Price by Type",
+               xaxis = list(title = "Year"),
+               yaxis = list(title = "Average Price"))
+
+```
+
+## Plot
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+library(tidyverse)
+library(lubridate)
+library(plotly)
+library(tibbletime)
+
+plotdata <- read.csv('avocado.csv')
+
+plotdata$Date <- as_datetime(plotdata$Date)
+
+type_tibble <- plotdata %>%
+        select(Date, type, AveragePrice) %>%
+        arrange(Date) %>%
+        group_by(type) %>%
+        as_tbl_time(index = Date) %>%
+        as_period('month')
+
+```
+
+
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+plot_ly(data = type_tibble, 
+        x = ~Date, y = ~AveragePrice, color = ~type, 
+        mode = "lines+markers") %>%
+        layout(title = "Average Avocado Price by Type",
+               xaxis = list(title = "Year"),
+               yaxis = list(title = "Average Price"))
+```
+
